@@ -110,15 +110,15 @@ export default function EventMonitor() {
 
         <div className="space-y-3">
           <div>
-            <span className="mb-2 block text-[12px] text-muted-foreground">Categories</span>
+            <span className="mb-2 block text-[11px] font-medium text-muted-foreground">Categories</span>
             <div className="flex flex-wrap gap-1.5">
               {ALL_CATEGORIES.map((cat) => (
                 <button
                   key={cat}
                   className={cn(
-                    "rounded-md border px-2.5 py-1 font-mono text-[11px] font-medium transition-all",
+                    "rounded-lg border px-2.5 py-1.5 font-mono text-[11px] font-medium transition-all",
                     categoryFilter.has(cat)
-                      ? "border-primary/30 bg-primary/10 text-primary"
+                      ? "border-primary/30 bg-primary/10 text-primary shadow-sm shadow-primary/5"
                       : "border-border text-muted-foreground hover:border-primary/30 hover:text-primary"
                   )}
                   onClick={() => toggleCategory(cat)}
@@ -129,7 +129,7 @@ export default function EventMonitor() {
             </div>
           </div>
           <div>
-            <span className="mb-2 block text-[12px] text-muted-foreground">Severity</span>
+            <span className="mb-2 block text-[11px] font-medium text-muted-foreground">Severity</span>
             <div className="flex flex-wrap gap-1.5">
               {ALL_SEVERITIES.map((sev) => {
                 const styles = severityStyles[sev];
@@ -137,8 +137,8 @@ export default function EventMonitor() {
                   <button
                     key={sev}
                     className={cn(
-                      "rounded-md border px-2.5 py-1 text-[11px] font-medium capitalize transition-all",
-                      severityFilter.has(sev) ? styles.active : styles.inactive
+                      "rounded-lg border px-2.5 py-1.5 text-[11px] font-medium capitalize transition-all",
+                      severityFilter.has(sev) ? cn(styles.active, "shadow-sm") : styles.inactive
                     )}
                     onClick={() => toggleSeverity(sev)}
                   >
@@ -156,7 +156,7 @@ export default function EventMonitor() {
           <h3 className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
             Event Stream
           </h3>
-          <span className="font-mono text-[11px] text-muted-foreground">
+          <span className="rounded-md bg-muted px-2 py-0.5 font-mono text-[11px] tabular-nums text-muted-foreground">
             {filteredEvents.length} events
           </span>
         </div>

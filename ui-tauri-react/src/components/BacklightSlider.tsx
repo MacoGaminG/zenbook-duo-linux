@@ -5,10 +5,10 @@ import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
 
 const levels = [
-  { value: 0, label: "Off" },
-  { value: 1, label: "Low" },
-  { value: 2, label: "Mid" },
-  { value: 3, label: "Max" },
+  { value: 0, label: "Off", desc: "Backlight off" },
+  { value: 1, label: "Low", desc: "Dim" },
+  { value: 2, label: "Mid", desc: "Medium" },
+  { value: 3, label: "Max", desc: "Full brightness" },
 ];
 
 export default function BacklightSlider() {
@@ -24,15 +24,12 @@ export default function BacklightSlider() {
     const level = value[0];
     if (level === displayLevel) return;
 
-    // Clear any pending timer from a previous set
     if (clearTimer.current) clearTimeout(clearTimer.current);
 
     setLocalLevel(level);
     setPending(true);
     try {
       await setBacklight(level);
-      // Directly update the store rather than re-reading the file,
-      // which is subject to race conditions with the daemon/file watchers.
       dispatch({
         type: "SET_STATUS",
         payload: { ...store.status, backlightLevel: level },
@@ -41,8 +38,6 @@ export default function BacklightSlider() {
       console.error("Failed to set backlight:", err);
     } finally {
       setPending(false);
-      // Keep localLevel set briefly to override any stale file-watcher
-      // refreshes that may arrive with an outdated value.
       clearTimer.current = setTimeout(() => setLocalLevel(null), 2000);
     }
   };
@@ -62,20 +57,21 @@ export default function BacklightSlider() {
         />
         <span className="font-mono text-[11px] text-muted-foreground">3</span>
       </div>
-      <div className="flex justify-between">
+      <div className="grid grid-cols-4 gap-1.5">
         {levels.map((l) => (
           <button
             key={l.value}
             className={cn(
-              "rounded-md px-3 py-1.5 font-mono text-[11px] font-medium transition-all",
+              "flex flex-col items-center gap-0.5 rounded-lg border px-2 py-2 transition-all",
               displayLevel === l.value
-                ? "bg-primary/15 text-primary"
-                : "text-muted-foreground hover:text-foreground"
+                ? "border-amber-500/30 bg-amber-500/8 text-amber-600 dark:text-amber-400"
+                : "border-transparent text-muted-foreground hover:border-border hover:text-foreground"
             )}
             onClick={() => handleChange([l.value])}
             disabled={pending}
           >
-            {l.label}
+            <span className="font-mono text-[12px] font-semibold">{l.label}</span>
+            <span className="text-[10px] opacity-60">{l.desc}</span>
           </button>
         ))}
       </div>

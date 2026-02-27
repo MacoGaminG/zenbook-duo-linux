@@ -1,4 +1,4 @@
-mod commands;
+pub mod commands;
 pub mod hardware;
 mod models;
 pub mod usb_media_remap_helper;
@@ -72,6 +72,7 @@ pub fn run() {
             commands::usb_media_remap::usb_media_remap_status,
             commands::usb_media_remap::usb_media_remap_start,
             commands::usb_media_remap::usb_media_remap_stop,
+            commands::usb_media_remap::usb_media_remap_toggle_pause,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -112,6 +113,13 @@ fn build_tray(app: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Error>> 
         true,
         None::<&str>,
     )?;
+    let usb_media_remap_pause = MenuItem::with_id(
+        app,
+        "usb_media_remap_pause",
+        "Pause/Resume Remap",
+        true,
+        None::<&str>,
+    )?;
     let separator3 = PredefinedMenuItem::separator(app)?;
     let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
 
@@ -124,6 +132,7 @@ fn build_tray(app: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Error>> 
             &backlight_submenu,
             &separator2,
             &usb_media_remap,
+            &usb_media_remap_pause,
             &separator3,
             &quit,
         ],
@@ -160,6 +169,9 @@ fn build_tray(app: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Error>> 
                     } else {
                         let _ = commands::usb_media_remap::start_remap();
                     }
+                }
+                "usb_media_remap_pause" => {
+                    let _ = commands::usb_media_remap::toggle_pause();
                 }
                 _ => {}
             }

@@ -35,7 +35,7 @@ export default function OrientationButtons() {
   };
 
   return (
-    <div className="grid grid-cols-2 gap-2">
+    <div className="grid grid-cols-4 gap-2">
       {orientations.map((o) => {
         const Icon = o.icon;
         const isActive = store.status.orientation === o.id;
@@ -43,16 +43,23 @@ export default function OrientationButtons() {
           <button
             key={o.id}
             className={cn(
-              "flex items-center justify-center gap-2 rounded-lg border px-4 py-3 text-[13px] font-medium transition-all",
+              "group relative flex flex-col items-center gap-1.5 rounded-xl border px-3 py-3 transition-all",
               isActive
-                ? "border-primary/40 bg-primary/10 text-primary"
-                : "border-border text-muted-foreground hover:border-primary/30 hover:text-foreground"
+                ? "border-blue-500/30 bg-blue-500/8 text-blue-600 dark:text-blue-400"
+                : "border-border text-muted-foreground hover:border-blue-500/20 hover:text-foreground"
             )}
             onClick={() => handleClick(o.id)}
             disabled={pending}
           >
-            <Icon className="size-4" stroke={1.5} />
-            {o.label}
+            <div className={cn(
+              "flex size-8 items-center justify-center rounded-lg transition-colors",
+              isActive
+                ? "bg-blue-500/15"
+                : "bg-muted/50 group-hover:bg-muted"
+            )}>
+              <Icon className="size-4" stroke={isActive ? 2 : 1.5} />
+            </div>
+            <span className="text-[11px] font-medium">{o.label}</span>
           </button>
         );
       })}

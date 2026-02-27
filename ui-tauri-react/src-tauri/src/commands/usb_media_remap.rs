@@ -17,6 +17,7 @@ const HELPER_FLAG: &str = "--usb-media-remap-helper";
 pub struct UsbMediaRemapStatus {
     pub running: bool,
     pub pid: Option<u32>,
+    pub paused: bool,
 }
 
 #[tauri::command]
@@ -48,6 +49,7 @@ pub fn get_status() -> UsbMediaRemapStatus {
             return UsbMediaRemapStatus {
                 running: true,
                 pid: Some(pid),
+                paused: std::path::Path::new(&pause_file_path()).exists(),
             };
         }
         let _ = fs::remove_file(pid_path());
@@ -57,6 +59,7 @@ pub fn get_status() -> UsbMediaRemapStatus {
     UsbMediaRemapStatus {
         running: false,
         pid: None,
+        paused: false,
     }
 }
 
@@ -90,6 +93,9 @@ pub fn start_remap() -> Result<(), String> {
 }
 
 pub fn stop_remap() -> Result<(), String> {
+    // Clean up pause file on stop.
+    let _ = fs::remove_file(pause_file_path());
+
     let pid_files = running_pid_files();
     if pid_files.is_empty() {
         // Nothing to stop.
@@ -189,6 +195,32 @@ fn current_username() -> Result<String, String> {
 fn pid_path() -> String {
     let uid = Uid::current().as_raw();
     format!("/tmp/duo-{uid}/usb_media_remap.pid")
+}
+
+pub fn pause_file_path() -> String {
+    let uid = Uid::current().as_raw();
+    format!("/tmp/duo-{uid}/usb_media_remap.paused")
+}
+
+pub fn toggle_pause() -> Result<(), String> {
+    let path = pause_file_path();
+    let was_paused = std::path::Path::new(&path).exists();
+    if was_paused {
+        fs::remove_file(&path).map_err(|e| format!("Failed to remove pause file: {e}"))?;
+    } else {
+        ensure_duo_dir_for_pid(&pid_path())?;
+        fs::write(&path, "").map_err(|e| format!("Failed to create pause file: {e}"))?;
+    }
+    let msg = if was_paused { "USB Media Remap resumed" } else { "USB Media Remap paused" };
+    let _ = std::process::Command::new("notify-send")
+        .args(["-a", "Zenbook Duo Control", "-i", "input-keyboard", msg])
+        .spawn();
+    Ok(())
+}
+
+#[tauri::command]
+pub fn usb_media_remap_toggle_pause() -> Result<(), String> {
+    toggle_pause()
 }
 
 fn running_pid_files() -> Vec<String> {

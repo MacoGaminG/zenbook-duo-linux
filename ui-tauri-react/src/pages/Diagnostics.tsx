@@ -1,5 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import * as api from "@/lib/tauri";
 import type {
@@ -15,6 +22,9 @@ import {
   IconPlayerPlay,
   IconRefresh,
   IconDownload,
+  IconDeviceGamepad,
+  IconTopologyStar3,
+  IconTerminal,
 } from "@tabler/icons-react";
 
 function downloadJson(filename: string, data: unknown) {
@@ -200,11 +210,17 @@ export default function Diagnostics() {
       </div>
 
       <div className="grid grid-cols-1 gap-4">
+        {/* Evdev Capture */}
         <div className="glass-card rounded-xl p-5 animate-stagger-in stagger-1">
-          <div className="mb-3 flex items-center justify-between">
-            <h3 className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-              Evdev Capture
-            </h3>
+          <div className="mb-4 flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="flex size-7 items-center justify-center rounded-lg bg-violet-500/12 text-violet-500 dark:bg-violet-400/10 dark:text-violet-400">
+                <IconDeviceGamepad className="size-3.5" stroke={1.75} />
+              </div>
+              <h3 className="text-[13px] font-semibold text-foreground">
+                Evdev Capture
+              </h3>
+            </div>
             <div className="flex gap-2">
               <Button
                 variant="outline"
@@ -240,29 +256,31 @@ export default function Diagnostics() {
 
           <div className="flex flex-col gap-3">
             <div className="flex flex-wrap items-center gap-2">
-              <select
-                className="h-8 rounded-md border border-border bg-background px-2 font-mono text-xs"
-                value={selectedEvdev}
-                onChange={(e) => setSelectedEvdev(e.target.value)}
-              >
-                {evdev.map((d) => (
-                  <option key={d.eventPath} value={d.eventPath}>
-                    {d.eventPath} - {d.name}
-                  </option>
-                ))}
-              </select>
+              <Select value={selectedEvdev} onValueChange={setSelectedEvdev}>
+                <SelectTrigger className="h-8 w-auto min-w-[220px] font-mono text-xs">
+                  <SelectValue placeholder="Select device" />
+                </SelectTrigger>
+                <SelectContent>
+                  {evdev.map((d) => (
+                    <SelectItem key={d.eventPath} value={d.eventPath} className="font-mono text-xs">
+                      {d.eventPath} - {d.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-              <select
-                className="h-8 rounded-md border border-border bg-background px-2 font-mono text-xs"
-                value={String(evdevSeconds)}
-                onChange={(e) => setEvdevSeconds(Number(e.target.value))}
-              >
-                {[3, 5, 10, 15].map((s) => (
-                  <option key={s} value={s}>
-                    {s}s
-                  </option>
-                ))}
-              </select>
+              <Select value={String(evdevSeconds)} onValueChange={(v) => setEvdevSeconds(Number(v))}>
+                <SelectTrigger className="h-8 w-[70px] font-mono text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {[3, 5, 10, 15].map((s) => (
+                    <SelectItem key={s} value={String(s)} className="font-mono text-xs">
+                      {s}s
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
               <Button
                 size="sm"
@@ -283,24 +301,24 @@ export default function Diagnostics() {
               >
                 Capture all keyboard nodes
               </Button>
-
-              {evdevSelected && (
-                <span className="text-xs text-muted-foreground">
-                  <span className="font-mono">phys</span> {evdevSelected.phys ?? "-"} ·{" "}
-                  <span className="font-mono">id</span>{" "}
-                  {(evdevSelected.vendor ?? "??") + ":" + (evdevSelected.product ?? "??")}
-                </span>
-              )}
             </div>
 
+            {evdevSelected && (
+              <div className="flex flex-wrap items-center gap-2 rounded-lg bg-muted/30 px-3 py-1.5 text-xs text-muted-foreground">
+                <span><span className="font-mono font-medium">phys</span> {evdevSelected.phys ?? "-"}</span>
+                <span className="text-border">|</span>
+                <span><span className="font-mono font-medium">id</span> {(evdevSelected.vendor ?? "??") + ":" + (evdevSelected.product ?? "??")}</span>
+              </div>
+            )}
+
             {evdevError && (
-              <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 font-mono text-xs text-destructive">
+              <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 font-mono text-xs text-destructive">
                 {evdevError}
               </div>
             )}
 
             <pre className={cn(
-              "max-h-[280px] overflow-auto rounded-md border border-border bg-black/40 p-3 font-mono text-[11px] leading-relaxed",
+              "max-h-[280px] overflow-auto rounded-lg border border-border/60 bg-black/30 dark:bg-black/40 p-3 font-mono text-[11px] leading-relaxed",
               (evdevEvents.length === 0 && evdevEventsMulti.length === 0)
                 ? "text-muted-foreground"
                 : "text-foreground"
@@ -324,11 +342,17 @@ export default function Diagnostics() {
           </div>
         </div>
 
+        {/* HID Topology */}
         <div className="glass-card rounded-xl p-5 animate-stagger-in stagger-2">
-          <div className="mb-3 flex items-center justify-between">
-            <h3 className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-              HID Topology
-            </h3>
+          <div className="mb-4 flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="flex size-7 items-center justify-center rounded-lg bg-cyan-500/12 text-cyan-500 dark:bg-cyan-400/10 dark:text-cyan-400">
+                <IconTopologyStar3 className="size-3.5" stroke={1.75} />
+              </div>
+              <h3 className="text-[13px] font-semibold text-foreground">
+                HID Topology
+              </h3>
+            </div>
             <Button
               variant="outline"
               size="sm"
@@ -342,18 +366,22 @@ export default function Diagnostics() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <span className="font-mono text-xs text-muted-foreground">vid</span>
-            <input
-              className="h-8 w-[90px] rounded-md border border-border bg-background px-2 font-mono text-xs"
-              value={vid}
-              onChange={(e) => setVid(e.target.value)}
-            />
-            <span className="font-mono text-xs text-muted-foreground">pid</span>
-            <input
-              className="h-8 w-[90px] rounded-md border border-border bg-background px-2 font-mono text-xs"
-              value={pid}
-              onChange={(e) => setPid(e.target.value)}
-            />
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] font-medium text-muted-foreground">VID</span>
+              <input
+                className="h-8 w-[90px] rounded-md border border-border bg-background px-2 font-mono text-xs"
+                value={vid}
+                onChange={(e) => setVid(e.target.value)}
+              />
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] font-medium text-muted-foreground">PID</span>
+              <input
+                className="h-8 w-[90px] rounded-md border border-border bg-background px-2 font-mono text-xs"
+                value={pid}
+                onChange={(e) => setPid(e.target.value)}
+              />
+            </div>
             <Button size="sm" onClick={refreshHid} className="gap-1.5">
               <IconRefresh className="size-3.5" stroke={1.5} />
               Load
@@ -361,58 +389,59 @@ export default function Diagnostics() {
           </div>
 
           <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
-            <div className="rounded-md border border-border bg-muted/20 p-3">
+            <div className="rounded-lg border border-border/60 bg-muted/20 p-3">
               <div className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
                 Devices
               </div>
-              <select
-                className="h-8 w-full rounded-md border border-border bg-background px-2 font-mono text-xs"
-                value={selectedHidId}
-                onChange={(e) => setSelectedHidId(e.target.value)}
-              >
-                {hid.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.id} ({d.driver ?? "?"})
-                  </option>
-                ))}
-              </select>
-              <div className="mt-2 font-mono text-[11px] text-muted-foreground">
-                <div>hidName: {hidSelected?.hidName ?? "-"}</div>
-                <div>hidPhys: {hidSelected?.hidPhys ?? "-"}</div>
-                <div>hidId: {hidSelected?.hidId ?? "-"}</div>
+              <Select value={selectedHidId} onValueChange={setSelectedHidId}>
+                <SelectTrigger className="h-8 w-full font-mono text-xs">
+                  <SelectValue placeholder="Select device" />
+                </SelectTrigger>
+                <SelectContent>
+                  {hid.map((d) => (
+                    <SelectItem key={d.id} value={d.id} className="font-mono text-xs">
+                      {d.id} ({d.driver ?? "?"})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <div className="mt-2 space-y-0.5 font-mono text-[11px] text-muted-foreground">
+                <div><span className="text-muted-foreground/60">hidName:</span> {hidSelected?.hidName ?? "-"}</div>
+                <div><span className="text-muted-foreground/60">hidPhys:</span> {hidSelected?.hidPhys ?? "-"}</div>
+                <div><span className="text-muted-foreground/60">hidId:</span> {hidSelected?.hidId ?? "-"}</div>
               </div>
-              <div className="mt-2 text-xs text-muted-foreground">
-                HID "topology" = the keyboard exposes multiple HID interfaces. Each interface maps to
-                different Linux devices (evdev + hidraw). Pick the interface that lists the evdev
-                node you care about (like <span className="font-mono">/dev/input/event28</span>),
-                then capture both evdev and its corresponding hidraw.
-              </div>
+              <p className="mt-2 rounded-lg bg-muted/30 px-2.5 py-2 text-[11px] leading-relaxed text-muted-foreground">
+                The keyboard exposes multiple HID interfaces, each mapping to different Linux devices
+                (evdev + hidraw). Pick the interface that lists the evdev node you care about, then
+                capture both evdev and its corresponding hidraw.
+              </p>
               <div className="mt-2 flex flex-wrap gap-2">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={loadDescriptor}
                   disabled={!selectedHidId || descriptorLoading}
+                  className="gap-1.5"
                 >
                   Read report_descriptor
                 </Button>
               </div>
             </div>
 
-            <div className="rounded-md border border-border bg-muted/20 p-3">
+            <div className="rounded-lg border border-border/60 bg-muted/20 p-3">
               <div className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
                 Mappings
               </div>
-              <div className="space-y-2 font-mono text-[11px]">
+              <div className="space-y-3 font-mono text-[11px]">
                 <div>
-                  <div className="text-muted-foreground">hidraw</div>
-                  <div className="text-foreground">
+                  <div className="mb-0.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/60">hidraw</div>
+                  <div className="rounded-md bg-muted/30 px-2 py-1 text-foreground">
                     {(hidSelected?.hidrawNodes ?? []).join(" ") || "-"}
                   </div>
                 </div>
                 <div>
-                  <div className="text-muted-foreground">evdev</div>
-                  <div className="text-foreground">
+                  <div className="mb-0.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/60">evdev</div>
+                  <div className="rounded-md bg-muted/30 px-2 py-1 text-foreground">
                     {(hidSelected?.inputEventNodes ?? []).join(" ") || "-"}
                   </div>
                 </div>
@@ -421,13 +450,13 @@ export default function Diagnostics() {
           </div>
 
           {descriptorError && (
-            <div className="mt-3 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 font-mono text-xs text-destructive">
+            <div className="mt-3 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 font-mono text-xs text-destructive">
               {descriptorError}
             </div>
           )}
 
           {descriptor && (
-            <div className="mt-3 rounded-md border border-border bg-black/40 p-3">
+            <div className="mt-3 rounded-lg border border-border/60 bg-black/30 dark:bg-black/40 p-3">
               <div className="mb-2 flex items-center justify-between">
                 <span className="font-mono text-[11px] text-muted-foreground">
                   len={descriptor.len} reportIds=[{descriptor.reportIds.join(", ")}]
@@ -442,7 +471,9 @@ export default function Diagnostics() {
                     )
                   }
                   disabled={!descriptor}
+                  className="gap-1.5"
                 >
+                  <IconDownload className="size-3.5" stroke={1.5} />
                   Export
                 </Button>
               </div>
@@ -453,11 +484,18 @@ export default function Diagnostics() {
           )}
         </div>
 
+        {/* Hidraw Capture */}
         <div className="glass-card rounded-xl p-5 animate-stagger-in stagger-3">
-          <div className="mb-3 flex items-center justify-between">
-            <h3 className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-              Hidraw Capture (pkexec)
-            </h3>
+          <div className="mb-4 flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="flex size-7 items-center justify-center rounded-lg bg-orange-500/12 text-orange-500 dark:bg-orange-400/10 dark:text-orange-400">
+                <IconTerminal className="size-3.5" stroke={1.75} />
+              </div>
+              <h3 className="text-[13px] font-semibold text-foreground">
+                Hidraw Capture
+              </h3>
+              <span className="rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">pkexec</span>
+            </div>
             <Button
               variant="outline"
               size="sm"
@@ -476,30 +514,31 @@ export default function Diagnostics() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <select
-              className="h-8 rounded-md border border-border bg-background px-2 font-mono text-xs"
-              value={selectedHidraw}
-              onChange={(e) => setSelectedHidraw(e.target.value)}
-            >
-              <option value="">Select hidraw</option>
-              {hidrawNodes.map((n) => (
-                <option key={n} value={n}>
-                  {n}
-                </option>
-              ))}
-            </select>
+            <Select value={selectedHidraw} onValueChange={setSelectedHidraw}>
+              <SelectTrigger className="h-8 w-[160px] font-mono text-xs">
+                <SelectValue placeholder="Select hidraw" />
+              </SelectTrigger>
+              <SelectContent>
+                {hidrawNodes.map((n) => (
+                  <SelectItem key={n} value={n} className="font-mono text-xs">
+                    {n}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-            <select
-              className="h-8 rounded-md border border-border bg-background px-2 font-mono text-xs"
-              value={String(hidrawSeconds)}
-              onChange={(e) => setHidrawSeconds(Number(e.target.value))}
-            >
-              {[3, 5, 10].map((s) => (
-                <option key={s} value={s}>
-                  {s}s
-                </option>
-              ))}
-            </select>
+            <Select value={String(hidrawSeconds)} onValueChange={(v) => setHidrawSeconds(Number(v))}>
+              <SelectTrigger className="h-8 w-[70px] font-mono text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {[3, 5, 10].map((s) => (
+                  <SelectItem key={s} value={String(s)} className="font-mono text-xs">
+                    {s}s
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
             <Button
               size="sm"
@@ -511,25 +550,25 @@ export default function Diagnostics() {
               Capture (password)
             </Button>
 
-            <span className="text-xs text-muted-foreground">
+            <span className="text-[11px] text-muted-foreground">
               Captures only changes; safe bounded read.
             </span>
           </div>
 
           {hidrawError && (
-            <div className="mt-3 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 font-mono text-xs text-destructive">
+            <div className="mt-3 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 font-mono text-xs text-destructive">
               {hidrawError}
             </div>
           )}
 
           {hidrawCapture?.stderr && (
-            <div className="mt-3 rounded-md border border-border bg-muted/20 px-3 py-2 font-mono text-xs text-muted-foreground">
+            <div className="mt-3 rounded-lg border border-border/60 bg-muted/20 px-3 py-2 font-mono text-xs text-muted-foreground">
               stderr: {hidrawCapture.stderr}
             </div>
           )}
 
           <pre className={cn(
-            "mt-3 max-h-[280px] overflow-auto rounded-md border border-border bg-black/40 p-3 font-mono text-[11px] leading-relaxed",
+            "mt-3 max-h-[280px] overflow-auto rounded-lg border border-border/60 bg-black/30 dark:bg-black/40 p-3 font-mono text-[11px] leading-relaxed",
             (hidrawCapture?.samples?.length ?? 0) === 0 ? "text-muted-foreground" : "text-foreground"
           )}>
             {(hidrawCapture?.samples?.length ?? 0) === 0

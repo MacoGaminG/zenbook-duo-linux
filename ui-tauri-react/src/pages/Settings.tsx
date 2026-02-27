@@ -5,6 +5,7 @@ import {
   usbMediaRemapStart,
   usbMediaRemapStatus,
   usbMediaRemapStop,
+  usbMediaRemapTogglePause,
 } from "@/lib/tauri";
 import type { DuoSettings, ThemePreference, UsbMediaRemapStatus } from "@/types/duo";
 import { useTheme } from "next-themes";
@@ -21,7 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { IconDeviceFloppy } from "@tabler/icons-react";
+import { IconDeviceFloppy, IconKeyboard, IconPlayerPause, IconPlayerPlay } from "@tabler/icons-react";
 
 export default function Settings() {
   const store = useStore();
@@ -33,6 +34,7 @@ export default function Settings() {
   const [remapStatus, setRemapStatus] = useState<UsbMediaRemapStatus>({
     running: false,
     pid: null,
+    paused: false,
   });
   // Desired switch state while we wait for pkexec + pid-file status to catch up.
   const [remapDesired, setRemapDesired] = useState<boolean | null>(null);
@@ -144,11 +146,16 @@ export default function Settings() {
 
       <div className="glass-card animate-stagger-in stagger-1 rounded-xl p-5">
         <div className="mb-5 flex items-center justify-between gap-4">
-          <h3 className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-            Defaults
-          </h3>
+          <div className="flex items-center gap-2.5">
+            <div className="flex size-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <IconDeviceFloppy className="size-3.5" stroke={1.75} />
+            </div>
+            <h3 className="text-[13px] font-semibold text-foreground">
+              Defaults
+            </h3>
+          </div>
           <Button onClick={handleSave} disabled={saving} size="sm" className="gap-2">
-            <IconDeviceFloppy className="size-4" stroke={1.5} />
+            <IconDeviceFloppy className="size-3.5" stroke={1.5} />
             {saving ? "Saving..." : "Save"}
           </Button>
         </div>
@@ -212,11 +219,16 @@ export default function Settings() {
       </div>
 
       <div className="mt-5 glass-card animate-stagger-in stagger-2 rounded-xl p-5">
-        <h3 className="mb-5 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-          Keyboard
-        </h3>
+        <div className="mb-5 flex items-center gap-2.5">
+          <div className="flex size-7 items-center justify-center rounded-lg bg-teal-500/10 text-teal-500 dark:bg-teal-400/10 dark:text-teal-400">
+            <IconKeyboard className="size-3.5" stroke={1.75} />
+          </div>
+          <h3 className="text-[13px] font-semibold text-foreground">
+            Keyboard
+          </h3>
+        </div>
 
-        <div className="space-y-5">
+        <div className="space-y-4">
           <SettingRow
             label="USB Media Remap"
             description="Maps F1-F3/F5-F6 to media and brightness keys while docked"
@@ -242,18 +254,52 @@ export default function Settings() {
                     ? "Enabling..."
                     : "Disabling..."
                   : remapStatus.running
-                    ? "On"
+                    ? remapStatus.paused
+                      ? "Paused"
+                      : "On"
                     : "Off"}
               </span>
+              {remapStatus.running && remapDesired === null && (
+                <Button
+                  size="sm"
+                  variant={remapStatus.paused ? "default" : "outline"}
+                  className="gap-1.5"
+                  onClick={async () => {
+                    try {
+                      await usbMediaRemapTogglePause();
+                      await refreshRemapStatus();
+                    } catch (err) {
+                      console.error("Failed to toggle pause:", err);
+                      toast.error("Failed to toggle pause");
+                    }
+                  }}
+                >
+                  {remapStatus.paused ? (
+                    <><IconPlayerPlay className="size-3.5" stroke={1.5} /> Resume</>
+                  ) : (
+                    <><IconPlayerPause className="size-3.5" stroke={1.5} /> Pause</>
+                  )}
+                </Button>
+              )}
+              {remapStatus.running && remapStatus.paused && (
+                <Badge
+                  className="border-amber-500/20 bg-amber-500/10 text-amber-700 dark:border-amber-400/25 dark:bg-amber-400/10 dark:text-amber-200"
+                >
+                  Paused
+                </Badge>
+              )}
               {(remapBusy || remapDesired !== null) && <Spinner className="text-muted-foreground" />}
             </div>
           </SettingRow>
 
-          <p className="text-[12px] text-muted-foreground">
+          <p className="rounded-lg bg-muted/50 px-3 py-2 text-[12px] text-muted-foreground">
             Requires admin approval and restarts input handling while enabled.
+            You can pause/resume from the button above or from the system tray.
+            For a keyboard shortcut, add a compositor keybinding that runs{" "}
+            <code className="rounded bg-muted px-1 py-0.5 text-[11px]">
+              zenbook-duo-control --toggle-remap-pause
+            </code>.
           </p>
-
-          <div className="h-px bg-border/50" />
         </div>
       </div>
 

@@ -46,6 +46,7 @@ export interface DuoSettings {
 export interface UsbMediaRemapStatus {
   running: boolean;
   pid?: number | null;
+  paused: boolean;
 }
 
 export interface Profile {

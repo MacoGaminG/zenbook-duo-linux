@@ -2,7 +2,21 @@ import { useState, useMemo } from "react";
 import { useStore, useDispatch, refreshLogs, clearLogs } from "@/lib/store";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { IconRefresh, IconFilter, IconFileText, IconTrash, IconCopy, IconCheck } from "@tabler/icons-react";
+
+function getLogLevel(line: string): "error" | "warn" | "info" | null {
+  const lower = line.toLowerCase();
+  if (lower.includes("error") || lower.includes("fatal") || lower.includes("panic")) return "error";
+  if (lower.includes("warn")) return "warn";
+  return null;
+}
+
+const logLevelStyles = {
+  error: "text-red-400",
+  warn: "text-amber-400",
+  info: "",
+} as const;
 
 export default function Logs() {
   const store = useStore();
@@ -35,8 +49,8 @@ export default function Logs() {
             System log output from zenbook-duo-user
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <span className="font-mono text-[12px] text-muted-foreground">
+        <div className="flex items-center gap-2">
+          <span className="rounded-md bg-muted px-2 py-1 font-mono text-[11px] tabular-nums text-muted-foreground">
             {filteredLogs.length} entries
           </span>
           <Button variant="outline" size="sm" onClick={handleCopy} className="gap-1.5" disabled={filteredLogs.length === 0}>
@@ -67,7 +81,7 @@ export default function Logs() {
         </div>
       </div>
 
-      <div className="glass-card rounded-xl p-4 animate-stagger-in stagger-2">
+      <div className="glass-card rounded-xl p-1 animate-stagger-in stagger-2">
         {filteredLogs.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <div className="mb-3 flex size-10 items-center justify-center rounded-lg bg-muted">
@@ -76,9 +90,32 @@ export default function Logs() {
             <p className="text-sm text-muted-foreground">No log entries found</p>
           </div>
         ) : (
-          <pre className="max-h-[500px] overflow-auto whitespace-pre-wrap font-mono text-[12px] leading-relaxed text-foreground/90">
-            {filteredLogs.join("\n")}
-          </pre>
+          <div className="max-h-[500px] overflow-auto rounded-lg bg-black/30 dark:bg-black/40">
+            <table className="w-full">
+              <tbody className="font-mono text-[12px] leading-relaxed">
+                {filteredLogs.map((line, i) => {
+                  const level = getLogLevel(line);
+                  return (
+                    <tr key={i} className={cn(
+                      "group border-b border-transparent transition-colors hover:bg-white/5",
+                      level === "error" && "bg-red-500/5",
+                      level === "warn" && "bg-amber-500/5"
+                    )}>
+                      <td className="select-none whitespace-nowrap py-0.5 pl-3 pr-3 text-right text-[10px] tabular-nums text-muted-foreground/40">
+                        {i + 1}
+                      </td>
+                      <td className={cn(
+                        "whitespace-pre-wrap py-0.5 pr-3 text-foreground/90",
+                        level && logLevelStyles[level]
+                      )}>
+                        {line}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </div>

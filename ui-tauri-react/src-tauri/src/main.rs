@@ -15,5 +15,15 @@ fn main() {
         }
     }
 
+    if std::env::args().any(|a| a == "--toggle-remap-pause") {
+        match zenbook_duo_control_lib::commands::usb_media_remap::toggle_pause() {
+            Ok(()) => std::process::exit(0),
+            Err(err) => {
+                eprintln!("{err}");
+                std::process::exit(1);
+            }
+        }
+    }
+
     zenbook_duo_control_lib::run()
 }

@@ -76,15 +76,25 @@ where
     flag::register(signal_hook::consts::SIGINT, Arc::clone(&terminate))
         .map_err(|e| format!("Failed to register SIGINT handler: {e}"))?;
 
+    let pause_file = base_dir.join("usb_media_remap.paused");
+
     while !terminate.load(Ordering::Relaxed) {
         let events = device
             .fetch_events()
             .map_err(|e| format!("Failed to read events: {e}"))?;
+        let paused = pause_file.exists();
         for event in events {
             if terminate.load(Ordering::Relaxed) {
                 break;
             }
-            handle_event(&mut uinput, &args, event)?;
+            if paused {
+                // Pass through all KEY events without remapping.
+                if event.event_type() == EventType::KEY {
+                    emit_key(&mut uinput, Key::new(event.code()), event.value())?;
+                }
+            } else {
+                handle_event(&mut uinput, &args, event)?;
+            }
         }
     }
 
